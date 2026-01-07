@@ -3,290 +3,280 @@
 <head>
 <meta charset="UTF-8">
 <title>Registro de Materiales</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-:root{
-  --c1:#fcad56;
-  --c2:#f77f00;
-  --c3:#dd7500;
-  --bg:#f6f6f6;
-  --card:#fff;
-  --border:#ddd;
-}
 body{
+  font-family: Arial, sans-serif;
+  background:#f5f5f5;
   margin:0;
-  font-family:system-ui, sans-serif;
-  background:var(--bg);
+  padding:20px;
 }
-header{
-  background:var(--c2);
-  color:#fff;
-  padding:14px;
-  text-align:center;
-  font-size:1.3em;
-}
-main{
+h1,h2{ margin-top:0 }
+.container{
   max-width:1100px;
   margin:auto;
-  padding:16px;
+  background:#fff;
+  padding:20px;
+  border-radius:6px;
 }
-section{
-  background:var(--card);
-  border-radius:8px;
-  padding:16px;
-  margin-bottom:20px;
-  box-shadow:0 2px 6px rgba(0,0,0,.05);
-}
-h2{
-  margin-top:0;
-  color:var(--c3);
-}
-.form-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:12px;
-}
-input, select, textarea, button{
+label{ font-weight:bold }
+input,select,textarea,button{
   width:100%;
   padding:8px;
-  border:1px solid var(--border);
-  border-radius:4px;
-}
-textarea{
-  resize:vertical;
-  min-height:60px;
+  margin:5px 0 15px 0;
+  box-sizing:border-box;
 }
 button{
-  background:var(--c2);
-  color:#fff;
+  background:#f77f00;
   border:none;
+  color:#fff;
+  font-weight:bold;
   cursor:pointer;
 }
-button:hover{ background:var(--c3); }
-.secondary{ background:#555; }
-
+button.secondary{
+  background:#999;
+}
 table{
   width:100%;
   border-collapse:collapse;
-  font-size:13px;
 }
-th, td{
-  border:1px solid var(--border);
+th,td{
+  border:1px solid #ccc;
   padding:6px;
+  font-size:14px;
 }
-th{
-  background:var(--c1);
+th{ background:#fcad56 }
+.actions button{
+  width:auto;
+  margin-right:5px;
 }
-.pendiente{
-  color:#b00000;
-  font-weight:bold;
-}
-.footer-buttons{
+.range{
   display:flex;
   gap:10px;
-  flex-wrap:wrap;
   align-items:end;
 }
+.range div{ flex:1 }
+small{ color:#555 }
 </style>
 </head>
 
 <body>
+<div class="container">
 
-<header>Registro de Entrega y Devolución de Materiales</header>
+<h1>Registro de Materiales</h1>
 
-<main>
+<form id="formRegistro">
+  <label>Nombre</label>
+  <input required id="nombre">
 
-<section>
-<h2>Nueva entrega</h2>
+  <label>Cargo</label>
+  <select id="cargo">
+    <option>Auxiliar de Enfermería</option>
+    <option>Licenciada en Enfermería</option>
+    <option>Practicante Interno</option>
+    <option>Médico</option>
+    <option>ASG</option>
+    <option>Otro</option>
+  </select>
 
-<div class="form-grid">
-<input id="nombre" placeholder="Nombre">
+  <label>Equipo</label>
+  <select id="equipo">
+    <option>ECG</option>
+    <option>Monitor</option>
+    <option>Saturómetro</option>
+    <option>Valija de traslado</option>
+    <option>Otoscopio</option>
+    <option>HGT A</option>
+    <option>HGT B</option>
+    <option>HGT C</option>
+    <option>Videolaringoscopio</option>
+    <option>Otro</option>
+  </select>
 
-<select id="cargo">
-<option value="">Cargo</option>
-<option>Auxiliar de Enfermería</option>
-<option>Licenciada en Enfermería</option>
-<option>Practicante Interno</option>
-<option>Médico</option>
-<option>ASG</option>
-<option>Otro</option>
-</select>
+  <label>Comentario</label>
+  <textarea id="comentario"></textarea>
 
-<select id="equipo">
-<option value="">Equipo</option>
-<option>ECG</option>
-<option>Monitor</option>
-<option>Saturómetro</option>
-<option>Valija de traslado</option>
-<option>Otoscopio</option>
-<option>HGT A</option>
-<option>HGT B</option>
-<option>HGT C</option>
-<option>Videolaringoscopio</option>
-<option>Otro</option>
-</select>
+  <button type="submit">Registrar ENTREGA</button>
+</form>
 
-<textarea id="comentario" placeholder="Comentario"></textarea>
-</div>
+<hr>
 
-<br>
-<button onclick="registrarEntrega()">Confirmar entrega</button>
-</section>
-
-<section>
 <h2>Historial</h2>
-
-<div class="footer-buttons">
-<button class="secondary" onclick="generarPDFHoy()">Generar PDF del día</button>
-</div>
-
-<br>
 
 <table id="tabla">
 <thead>
 <tr>
-<th>Fecha / Hora</th>
-<th>Nombre</th>
-<th>Cargo</th>
-<th>Equipo</th>
-<th>Entrega</th>
-<th>Devolución</th>
-<th>Comentario</th>
+  <th>Fecha</th>
+  <th>Hora</th>
+  <th>Nombre</th>
+  <th>Cargo</th>
+  <th>Equipo</th>
+  <th>Entrega</th>
+  <th>Devolución</th>
+  <th>Comentario</th>
+  <th>Acciones</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
 
-</section>
+<hr>
 
-</main>
+<h2>PDF por rango de fechas</h2>
+<div class="range">
+  <div>
+    <label>Desde</label>
+    <input type="date" id="desde">
+  </div>
+  <div>
+    <label>Hasta</label>
+    <input type="date" id="hasta">
+  </div>
+  <div>
+    <button onclick="generarPDF()">Generar PDF</button>
+  </div>
+</div>
 
-<!-- jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<hr>
+
+<h2>Respaldo</h2>
+<button onclick="exportar()">Descargar respaldo JSON</button>
+<input type="file" onchange="importar(event)">
+<small>Importar reemplaza los datos actuales</small>
+
+</div>
 
 <script>
-/* ===== CLAVE ===== */
-if(prompt("Ingrese la clave") !== "eco123"){
-  document.body.innerHTML="";
-  throw new Error("Acceso denegado");
+/* ================== CLAVE ================== */
+(function(){
+  let clave = localStorage.getItem("clave_app");
+  if(!clave){
+    let nueva = prompt("Crear clave de acceso");
+    if(!nueva){ alert("Clave requerida"); location.reload(); }
+    localStorage.setItem("clave_app", nueva);
+  }else{
+    let ingreso = prompt("Ingrese la clave");
+    if(ingreso !== clave){
+      alert("Clave incorrecta");
+      location.reload();
+    }
+  }
+})();
+
+/* ================== DATOS ================== */
+let registros = JSON.parse(localStorage.getItem("registros")||"[]");
+const tbody = document.querySelector("#tabla tbody");
+
+function guardar(){
+  localStorage.setItem("registros", JSON.stringify(registros));
 }
 
-let datos = JSON.parse(localStorage.getItem("registroMateriales")) || [];
-
-/* ===== FECHA ===== */
 function ahora(){
   const d = new Date();
   return {
-    ts: d.getTime(),
-    txt: d.toLocaleString()
+    fecha: d.toISOString().slice(0,10),
+    hora: d.toTimeString().slice(0,5)
   };
 }
 
-/* ===== REGISTRO ===== */
-function registrarEntrega(){
+/* ================== RENDER ================== */
+function render(){
+  tbody.innerHTML="";
+  registros.forEach((r,i)=>{
+    let tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${r.fecha}</td>
+      <td>${r.hora}</td>
+      <td>${r.nombre}</td>
+      <td>${r.cargo}</td>
+      <td>${r.equipo}</td>
+      <td>${r.entrega}</td>
+      <td>${r.devolucion||"Pendiente"}</td>
+      <td>${r.comentario||""}</td>
+      <td class="actions">
+        ${!r.devolucion?`<button onclick="devolver(${i})">Devolver</button>`:""}
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ================== ENTREGA ================== */
+document.getElementById("formRegistro").onsubmit=e=>{
+  e.preventDefault();
   if(!confirm("¿Confirma entrega?")) return;
 
-  const f = ahora();
-  datos.push({
-    timestamp: f.ts,
-    fecha: f.txt,
-    nombre: nombre.value,
-    cargo: cargo.value,
-    equipo: equipo.value,
-    comentario: comentario.value,
-    devolucion: null
+  const t=ahora();
+  registros.push({
+    fecha:t.fecha,
+    hora:t.hora,
+    nombre:nombre.value,
+    cargo:cargo.value,
+    equipo:equipo.value,
+    entrega:`${t.fecha} ${t.hora}`,
+    devolucion:"",
+    comentario:comentario.value
   });
 
-  localStorage.setItem("registroMateriales", JSON.stringify(datos));
-  limpiar();
+  guardar();
+  render();
+  e.target.reset();
+};
+
+/* ================== DEVOLUCIÓN ================== */
+function devolver(i){
+  if(!confirm("¿Confirma devolución?")) return;
+  const t=ahora();
+  registros[i].devolucion = `${t.fecha} ${t.hora}`;
+  guardar();
   render();
 }
 
-function limpiar(){
-  nombre.value="";
-  cargo.value="";
-  equipo.value="";
-  comentario.value="";
-}
+/* ================== PDF ================== */
+function generarPDF(){
+  const d=document.getElementById("desde").value;
+  const h=document.getElementById("hasta").value;
+  const datos = registros.filter(r=>r.fecha>=d && r.fecha<=h);
 
-/* ===== RENDER ===== */
-function render(){
-  const tb = document.querySelector("#tabla tbody");
-  tb.innerHTML="";
+  if(!datos.length){ alert("No hay registros para ese rango"); return; }
 
-  datos.forEach(d=>{
-    const tr = document.createElement("tr");
-    tr.dataset.ts = d.timestamp;
-    tr.innerHTML = `
-      <td>${d.fecha}</td>
-      <td>${d.nombre}</td>
-      <td>${d.cargo}</td>
-      <td>${d.equipo}</td>
-      <td>${d.fecha}</td>
-      <td class="${d.devolucion?'':'pendiente'}">
-        ${d.devolucion || 'Pendiente'}
-      </td>
-      <td>${d.comentario}</td>
-    `;
-    tb.appendChild(tr);
-  });
-}
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF("l","mm","a4");
 
-/* ===== PDF DEL DÍA ===== */
-function generarPDFHoy(){
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF("l","mm","a4");
+  let y=10;
+  pdf.text(`Historial de Materiales (${d} a ${h})`,10,y);
+  y+=8;
 
-  const hoy = new Date();
-  hoy.setHours(0,0,0,0);
-  const inicio = hoy.getTime();
-  const fin = inicio + 86400000;
-
-  const filas = [...document.querySelectorAll("#tabla tbody tr")]
-    .filter(tr=>{
-      const ts = Number(tr.dataset.ts);
-      return ts >= inicio && ts < fin;
-    });
-
-  if(!filas.length){
-    alert("No hay registros del día de hoy");
-    return;
-  }
-
-  pdf.setFontSize(14);
-  pdf.text("Historial de Entrega y Devolución de Materiales", 10, 10);
-  pdf.setFontSize(10);
-  pdf.text(`Fecha: ${new Date().toLocaleDateString()}`, 10, 18);
-
-  let y = 28;
-  const col = [10, 45, 85, 125, 160, 200, 240];
-
-  pdf.setFont(undefined,"bold");
-  ["Fecha","Nombre","Cargo","Equipo","Entrega","Devolución","Comentario"]
-    .forEach((t,i)=>pdf.text(t,col[i],y));
-
-  pdf.setFont(undefined,"normal");
-  y += 6;
-
-  filas.forEach(tr=>{
-    const c = tr.children;
-    if(y > 185){
-      pdf.addPage();
-      y = 20;
-    }
-    for(let i=0;i<7;i++){
-      pdf.text(String(c[i].innerText).slice(0,40), col[i], y);
-    }
-    y += 6;
+  datos.forEach(r=>{
+    pdf.text(`${r.fecha} ${r.hora} | ${r.nombre} | ${r.cargo} | ${r.equipo} | Entrega:${r.entrega} | Devolución:${r.devolucion||"Pendiente"}`,10,y);
+    y+=6;
+    if(y>190){ pdf.addPage(); y=10; }
   });
 
-  const nombreArchivo = `historial_${new Date().toISOString().slice(0,10)}.pdf`;
-  pdf.save(nombreArchivo);
+  pdf.save("historial_materiales.pdf");
+}
+
+/* ================== RESPALDO ================== */
+function exportar(){
+  const blob=new Blob([JSON.stringify(registros,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="respaldo_materiales.json";
+  a.click();
+}
+
+function importar(e){
+  const f=e.target.files[0];
+  if(!f) return;
+  if(!confirm("Esto reemplazará los datos actuales")) return;
+  const r=new FileReader();
+  r.onload=()=>{ registros=JSON.parse(r.result); guardar(); render(); };
+  r.readAsText(f);
 }
 
 render();
 </script>
-
 </body>
 </html>
