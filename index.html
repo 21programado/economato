@@ -8,167 +8,243 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
+:root{
+  --c1:#fcad56;
+  --c2:#f77f00;
+  --c3:#dd7500;
+  --bg:#f4f6f8;
+  --card:#ffffff;
+  --txt:#222;
+  --muted:#666;
+}
+
+*{ box-sizing:border-box }
+
 body{
-  font-family: Arial, sans-serif;
-  background:#f5f5f5;
   margin:0;
-  padding:20px;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
+  background:var(--bg);
+  color:var(--txt);
 }
-h1,h2{ margin-top:0 }
+
 .container{
-  max-width:1100px;
-  margin:auto;
-  background:#fff;
+  max-width:1200px;
+  margin:30px auto;
   padding:20px;
-  border-radius:6px;
 }
-label{ font-weight:bold }
-input,select,textarea,button{
+
+.card{
+  background:var(--card);
+  border-radius:12px;
+  padding:20px;
+  margin-bottom:20px;
+  box-shadow:0 4px 12px rgba(0,0,0,.06);
+}
+
+h1,h2{
+  margin-top:0;
+}
+
+h1{
+  font-size:26px;
+}
+
+h2{
+  font-size:20px;
+  color:var(--c3);
+}
+
+label{
+  font-weight:600;
+  font-size:14px;
+}
+
+input,select,textarea{
   width:100%;
-  padding:8px;
-  margin:5px 0 15px 0;
-  box-sizing:border-box;
+  padding:10px;
+  margin-top:4px;
+  margin-bottom:14px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:14px;
 }
+
+textarea{ resize:vertical }
+
 button{
-  background:#f77f00;
+  background:var(--c2);
   border:none;
   color:#fff;
-  font-weight:bold;
+  padding:10px 16px;
+  border-radius:8px;
+  font-weight:600;
   cursor:pointer;
 }
-button.secondary{
-  background:#999;
+
+button:hover{
+  background:var(--c3);
 }
+
+button.secondary{
+  background:#aaa;
+}
+
 table{
   width:100%;
   border-collapse:collapse;
-}
-th,td{
-  border:1px solid #ccc;
-  padding:6px;
   font-size:14px;
 }
-th{ background:#fcad56 }
-.actions button{
-  width:auto;
-  margin-right:5px;
+
+th,td{
+  border-bottom:1px solid #ddd;
+  padding:8px;
+  text-align:left;
 }
+
+th{
+  background:var(--c1);
+}
+
+.actions button{
+  padding:6px 10px;
+  font-size:13px;
+}
+
 .range{
   display:flex;
-  gap:10px;
+  gap:12px;
   align-items:end;
+  flex-wrap:wrap;
 }
-.range div{ flex:1 }
-small{ color:#555 }
+
+.range > div{
+  flex:1;
+  min-width:160px;
+}
+
+small{
+  color:var(--muted);
+}
 </style>
 </head>
 
 <body>
+
+<div id="app" style="display:none">
 <div class="container">
 
+<div class="card">
 <h1>Registro de Materiales</h1>
 
 <form id="formRegistro">
-  <label>Nombre</label>
-  <input required id="nombre">
+<label>Nombre</label>
+<input id="nombre" required>
 
-  <label>Cargo</label>
-  <select id="cargo">
-    <option>Auxiliar de Enfermería</option>
-    <option>Licenciada en Enfermería</option>
-    <option>Practicante Interno</option>
-    <option>Médico</option>
-    <option>ASG</option>
-    <option>Otro</option>
-  </select>
+<label>Cargo</label>
+<select id="cargo">
+<option>Auxiliar de Enfermería</option>
+<option>Licenciada en Enfermería</option>
+<option>Practicante Interno</option>
+<option>Médico</option>
+<option>ASG</option>
+<option>Otro</option>
+</select>
 
-  <label>Equipo</label>
-  <select id="equipo">
-    <option>ECG</option>
-    <option>Monitor</option>
-    <option>Saturómetro</option>
-    <option>Valija de traslado</option>
-    <option>Otoscopio</option>
-    <option>HGT A</option>
-    <option>HGT B</option>
-    <option>HGT C</option>
-    <option>Videolaringoscopio</option>
-    <option>Otro</option>
-  </select>
+<label>Equipo</label>
+<select id="equipo">
+<option>ECG</option>
+<option>Monitor</option>
+<option>Saturómetro</option>
+<option>Valija de traslado</option>
+<option>Otoscopio</option>
+<option>HGT A</option>
+<option>HGT B</option>
+<option>HGT C</option>
+<option>Videolaringoscopio</option>
+<option>Otro</option>
+</select>
 
-  <label>Comentario</label>
-  <textarea id="comentario"></textarea>
+<label>Comentario</label>
+<textarea id="comentario"></textarea>
 
-  <button type="submit">Registrar ENTREGA</button>
+<button type="submit">Registrar entrega</button>
 </form>
-
-<hr>
-
-<h2>Historial</h2>
-
-<table id="tabla">
-<thead>
-<tr>
-  <th>Fecha</th>
-  <th>Hora</th>
-  <th>Nombre</th>
-  <th>Cargo</th>
-  <th>Equipo</th>
-  <th>Entrega</th>
-  <th>Devolución</th>
-  <th>Comentario</th>
-  <th>Acciones</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-
-<hr>
-
-<h2>PDF por rango de fechas</h2>
-<div class="range">
-  <div>
-    <label>Desde</label>
-    <input type="date" id="desde">
-  </div>
-  <div>
-    <label>Hasta</label>
-    <input type="date" id="hasta">
-  </div>
-  <div>
-    <button onclick="generarPDF()">Generar PDF</button>
-  </div>
 </div>
 
-<hr>
+<div class="card">
+<h2>Historial</h2>
 
+<table>
+<thead>
+<tr>
+<th>Fecha</th>
+<th>Hora</th>
+<th>Nombre</th>
+<th>Cargo</th>
+<th>Equipo</th>
+<th>Entrega</th>
+<th>Devolución</th>
+<th>Comentario</th>
+<th></th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+
+<div class="card">
+<h2>Generar PDF</h2>
+<div class="range">
+<div>
+<label>Desde</label>
+<input type="date" id="desde">
+</div>
+<div>
+<label>Hasta</label>
+<input type="date" id="hasta">
+</div>
+<div>
+<button onclick="generarPDF()">Generar PDF</button>
+</div>
+</div>
+</div>
+
+<div class="card">
 <h2>Respaldo</h2>
-<button onclick="exportar()">Descargar respaldo JSON</button>
+<button onclick="exportar()">Descargar JSON</button>
 <input type="file" onchange="importar(event)">
-<small>Importar reemplaza los datos actuales</small>
+<small>Importar reemplaza todos los datos</small>
+</div>
 
+</div>
 </div>
 
 <script>
-/* ================== CLAVE ================== */
+/* ========= CLAVE (SIN RECARGAS) ========= */
 (function(){
-  let clave = localStorage.getItem("clave_app");
-  if(!clave){
+  let claveGuardada = localStorage.getItem("clave_app");
+
+  if(!claveGuardada){
     let nueva = prompt("Crear clave de acceso");
-    if(!nueva){ alert("Clave requerida"); location.reload(); }
+    if(!nueva){
+      alert("No se creó clave. Acceso cancelado.");
+      return;
+    }
     localStorage.setItem("clave_app", nueva);
   }else{
     let ingreso = prompt("Ingrese la clave");
-    if(ingreso !== clave){
+    if(ingreso !== claveGuardada){
       alert("Clave incorrecta");
-      location.reload();
+      return;
     }
   }
+
+  document.getElementById("app").style.display="block";
 })();
 
-/* ================== DATOS ================== */
-let registros = JSON.parse(localStorage.getItem("registros")||"[]");
-const tbody = document.querySelector("#tabla tbody");
+/* ========= DATOS ========= */
+let registros = JSON.parse(localStorage.getItem("registros") || "[]");
+const tbody = document.getElementById("tbody");
 
 function guardar(){
   localStorage.setItem("registros", JSON.stringify(registros));
@@ -182,29 +258,31 @@ function ahora(){
   };
 }
 
-/* ================== RENDER ================== */
+/* ========= RENDER ========= */
 function render(){
   tbody.innerHTML="";
   registros.forEach((r,i)=>{
     let tr=document.createElement("tr");
     tr.innerHTML=`
-      <td>${r.fecha}</td>
-      <td>${r.hora}</td>
-      <td>${r.nombre}</td>
-      <td>${r.cargo}</td>
-      <td>${r.equipo}</td>
-      <td>${r.entrega}</td>
-      <td>${r.devolucion||"Pendiente"}</td>
-      <td>${r.comentario||""}</td>
-      <td class="actions">
-        ${!r.devolucion?`<button onclick="devolver(${i})">Devolver</button>`:""}
-      </td>`;
+<td>${r.fecha}</td>
+<td>${r.hora}</td>
+<td>${r.nombre}</td>
+<td>${r.cargo}</td>
+<td>${r.equipo}</td>
+<td>${r.entrega}</td>
+<td>${r.devolucion||"Pendiente"}</td>
+<td>${r.comentario||""}</td>
+<td class="actions">
+${!r.devolucion?`<button onclick="devolver(${i})">Devolver</button>`:""}
+</td>`;
     tbody.appendChild(tr);
   });
 }
 
-/* ================== ENTREGA ================== */
-document.getElementById("formRegistro").onsubmit=e=>{
+render();
+
+/* ========= ENTREGA ========= */
+formRegistro.onsubmit=e=>{
   e.preventDefault();
   if(!confirm("¿Confirma entrega?")) return;
 
@@ -225,7 +303,7 @@ document.getElementById("formRegistro").onsubmit=e=>{
   e.target.reset();
 };
 
-/* ================== DEVOLUCIÓN ================== */
+/* ========= DEVOLUCIÓN ========= */
 function devolver(i){
   if(!confirm("¿Confirma devolución?")) return;
   const t=ahora();
@@ -234,23 +312,29 @@ function devolver(i){
   render();
 }
 
-/* ================== PDF ================== */
+/* ========= PDF ========= */
 function generarPDF(){
-  const d=document.getElementById("desde").value;
-  const h=document.getElementById("hasta").value;
+  const d=desde.value;
+  const h=hasta.value;
   const datos = registros.filter(r=>r.fecha>=d && r.fecha<=h);
 
-  if(!datos.length){ alert("No hay registros para ese rango"); return; }
+  if(!datos.length){
+    alert("No hay registros para ese rango");
+    return;
+  }
 
   const {jsPDF}=window.jspdf;
   const pdf=new jsPDF("l","mm","a4");
-
   let y=10;
+
   pdf.text(`Historial de Materiales (${d} a ${h})`,10,y);
   y+=8;
 
   datos.forEach(r=>{
-    pdf.text(`${r.fecha} ${r.hora} | ${r.nombre} | ${r.cargo} | ${r.equipo} | Entrega:${r.entrega} | Devolución:${r.devolucion||"Pendiente"}`,10,y);
+    pdf.text(
+      `${r.fecha} ${r.hora} | ${r.nombre} | ${r.cargo} | ${r.equipo} | Entrega:${r.entrega} | Devolución:${r.devolucion||"Pendiente"}`,
+      10,y
+    );
     y+=6;
     if(y>190){ pdf.addPage(); y=10; }
   });
@@ -258,7 +342,7 @@ function generarPDF(){
   pdf.save("historial_materiales.pdf");
 }
 
-/* ================== RESPALDO ================== */
+/* ========= RESPALDO ========= */
 function exportar(){
   const blob=new Blob([JSON.stringify(registros,null,2)],{type:"application/json"});
   const a=document.createElement("a");
@@ -270,13 +354,17 @@ function exportar(){
 function importar(e){
   const f=e.target.files[0];
   if(!f) return;
-  if(!confirm("Esto reemplazará los datos actuales")) return;
+  if(!confirm("Esto reemplazará todos los datos actuales")) return;
+
   const r=new FileReader();
-  r.onload=()=>{ registros=JSON.parse(r.result); guardar(); render(); };
+  r.onload=()=>{
+    registros=JSON.parse(r.result);
+    guardar();
+    render();
+  };
   r.readAsText(f);
 }
-
-render();
 </script>
+
 </body>
 </html>
