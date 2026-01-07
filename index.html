@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Registro de Materiales</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root{
+  --c1:#fcad56;
+  --c2:#f77f00;
+  --c3:#dd7500;
+  --bg:#f6f6f6;
+  --card:#fff;
+  --border:#ddd;
+}
+body{
+  margin:0;
+  font-family:system-ui, sans-serif;
+  background:var(--bg);
+}
+header{
+  background:var(--c2);
+  color:#fff;
+  padding:14px;
+  text-align:center;
+  font-size:1.3em;
+}
+main{
+  max-width:1100px;
+  margin:auto;
+  padding:16px;
+}
+section{
+  background:var(--card);
+  border-radius:8px;
+  padding:16px;
+  margin-bottom:20px;
+  box-shadow:0 2px 6px rgba(0,0,0,.05);
+}
+h2{
+  margin-top:0;
+  color:var(--c3);
+}
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px;
+}
+input, select, textarea, button{
+  width:100%;
+  padding:8px;
+  border:1px solid var(--border);
+  border-radius:4px;
+}
+textarea{
+  resize:vertical;
+  min-height:60px;
+}
+button{
+  background:var(--c2);
+  color:#fff;
+  border:none;
+  cursor:pointer;
+}
+button:hover{ background:var(--c3); }
+.secondary{ background:#555; }
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+th, td{
+  border:1px solid var(--border);
+  padding:6px;
+}
+th{
+  background:var(--c1);
+}
+.pendiente{
+  color:#b00000;
+  font-weight:bold;
+}
+.footer-buttons{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:end;
+}
+</style>
+</head>
+
+<body>
+
+<header>Registro de Entrega y Devolución de Materiales</header>
+
+<main>
+
+<section>
+<h2>Nueva entrega</h2>
+
+<div class="form-grid">
+<input id="nombre" placeholder="Nombre">
+
+<select id="cargo">
+<option value="">Cargo</option>
+<option>Auxiliar de Enfermería</option>
+<option>Licenciada en Enfermería</option>
+<option>Practicante Interno</option>
+<option>Médico</option>
+<option>ASG</option>
+<option>Otro</option>
+</select>
+
+<select id="equipo">
+<option value="">Equipo</option>
+<option>ECG</option>
+<option>Monitor</option>
+<option>Saturómetro</option>
+<option>Valija de traslado</option>
+<option>Otoscopio</option>
+<option>HGT A</option>
+<option>HGT B</option>
+<option>HGT C</option>
+<option>Videolaringoscopio</option>
+<option>Otro</option>
+</select>
+
+<textarea id="comentario" placeholder="Comentario"></textarea>
+</div>
+
+<br>
+<button onclick="registrarEntrega()">Confirmar entrega</button>
+</section>
+
+<section>
+<h2>Historial</h2>
+
+<div class="footer-buttons">
+<button class="secondary" onclick="generarPDFHoy()">Generar PDF del día</button>
+</div>
+
+<br>
+
+<table id="tabla">
+<thead>
+<tr>
+<th>Fecha / Hora</th>
+<th>Nombre</th>
+<th>Cargo</th>
+<th>Equipo</th>
+<th>Entrega</th>
+<th>Devolución</th>
+<th>Comentario</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+</section>
+
+</main>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+/* ===== CLAVE ===== */
+if(prompt("Ingrese la clave") !== "eco123"){
+  document.body.innerHTML="";
+  throw new Error("Acceso denegado");
+}
+
+let datos = JSON.parse(localStorage.getItem("registroMateriales")) || [];
+
+/* ===== FECHA ===== */
+function ahora(){
+  const d = new Date();
+  return {
+    ts: d.getTime(),
+    txt: d.toLocaleString()
+  };
+}
+
+/* ===== REGISTRO ===== */
+function registrarEntrega(){
+  if(!confirm("¿Confirma entrega?")) return;
+
+  const f = ahora();
+  datos.push({
+    timestamp: f.ts,
+    fecha: f.txt,
+    nombre: nombre.value,
+    cargo: cargo.value,
+    equipo: equipo.value,
+    comentario: comentario.value,
+    devolucion: null
+  });
+
+  localStorage.setItem("registroMateriales", JSON.stringify(datos));
+  limpiar();
+  render();
+}
+
+function limpiar(){
+  nombre.value="";
+  cargo.value="";
+  equipo.value="";
+  comentario.value="";
+}
+
+/* ===== RENDER ===== */
+function render(){
+  const tb = document.querySelector("#tabla tbody");
+  tb.innerHTML="";
+
+  datos.forEach(d=>{
+    const tr = document.createElement("tr");
+    tr.dataset.ts = d.timestamp;
+    tr.innerHTML = `
+      <td>${d.fecha}</td>
+      <td>${d.nombre}</td>
+      <td>${d.cargo}</td>
+      <td>${d.equipo}</td>
+      <td>${d.fecha}</td>
+      <td class="${d.devolucion?'':'pendiente'}">
+        ${d.devolucion || 'Pendiente'}
+      </td>
+      <td>${d.comentario}</td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+
+/* ===== PDF DEL DÍA ===== */
+function generarPDFHoy(){
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF("l","mm","a4");
+
+  const hoy = new Date();
+  hoy.setHours(0,0,0,0);
+  const inicio = hoy.getTime();
+  const fin = inicio + 86400000;
+
+  const filas = [...document.querySelectorAll("#tabla tbody tr")]
+    .filter(tr=>{
+      const ts = Number(tr.dataset.ts);
+      return ts >= inicio && ts < fin;
+    });
+
+  if(!filas.length){
+    alert("No hay registros del día de hoy");
+    return;
+  }
+
+  pdf.setFontSize(14);
+  pdf.text("Historial de Entrega y Devolución de Materiales", 10, 10);
+  pdf.setFontSize(10);
+  pdf.text(`Fecha: ${new Date().toLocaleDateString()}`, 10, 18);
+
+  let y = 28;
+  const col = [10, 45, 85, 125, 160, 200, 240];
+
+  pdf.setFont(undefined,"bold");
+  ["Fecha","Nombre","Cargo","Equipo","Entrega","Devolución","Comentario"]
+    .forEach((t,i)=>pdf.text(t,col[i],y));
+
+  pdf.setFont(undefined,"normal");
+  y += 6;
+
+  filas.forEach(tr=>{
+    const c = tr.children;
+    if(y > 185){
+      pdf.addPage();
+      y = 20;
+    }
+    for(let i=0;i<7;i++){
+      pdf.text(String(c[i].innerText).slice(0,40), col[i], y);
+    }
+    y += 6;
+  });
+
+  const nombreArchivo = `historial_${new Date().toISOString().slice(0,10)}.pdf`;
+  pdf.save(nombreArchivo);
+}
+
+render();
+</script>
+
+</body>
+</html>
