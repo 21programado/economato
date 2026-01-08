@@ -17,22 +17,18 @@
   --txt:#222;
   --muted:#666;
 }
-
 *{ box-sizing:border-box }
-
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
   background:var(--bg);
   color:var(--txt);
 }
-
 .container{
   max-width:1200px;
   margin:30px auto;
   padding:20px;
 }
-
 .card{
   background:var(--card);
   border-radius:12px;
@@ -40,25 +36,10 @@ body{
   margin-bottom:20px;
   box-shadow:0 4px 12px rgba(0,0,0,.06);
 }
-
-h1,h2{
-  margin-top:0;
-}
-
-h1{
-  font-size:26px;
-}
-
-h2{
-  font-size:20px;
-  color:var(--c3);
-}
-
-label{
-  font-weight:600;
-  font-size:14px;
-}
-
+h1,h2{ margin-top:0 }
+h1{ font-size:26px }
+h2{ font-size:20px; color:var(--c3) }
+label{ font-weight:600; font-size:14px }
 input,select,textarea{
   width:100%;
   padding:10px;
@@ -68,9 +49,7 @@ input,select,textarea{
   border:1px solid #ccc;
   font-size:14px;
 }
-
 textarea{ resize:vertical }
-
 button{
   background:var(--c2);
   border:none;
@@ -80,50 +59,38 @@ button{
   font-weight:600;
   cursor:pointer;
 }
-
-button:hover{
-  background:var(--c3);
-}
-
-button.secondary{
-  background:#aaa;
-}
-
+button:hover{ background:var(--c3) }
+button.secondary{ background:#aaa }
 table{
   width:100%;
   border-collapse:collapse;
   font-size:14px;
 }
-
 th,td{
   border-bottom:1px solid #ddd;
   padding:8px;
-  text-align:left;
+  vertical-align:top;
 }
-
-th{
-  background:var(--c1);
-}
-
+th{ background:var(--c1) }
 .actions button{
   padding:6px 10px;
   font-size:13px;
+  margin-bottom:4px;
 }
-
 .range{
   display:flex;
   gap:12px;
   align-items:end;
   flex-wrap:wrap;
 }
-
 .range > div{
   flex:1;
   min-width:160px;
 }
-
-small{
-  color:var(--muted);
+small{ color:var(--muted) }
+.comment-block{
+  white-space:pre-line;
+  font-size:13px;
 }
 </style>
 </head>
@@ -152,8 +119,9 @@ small{
 
 <label>Equipo</label>
 <select id="equipo">
+<option>Monitor 1</option>
+<option>Monitor 2</option>
 <option>ECG</option>
-<option>Monitor</option>
 <option>Saturómetro</option>
 <option>Valija de traslado</option>
 <option>Otoscopio</option>
@@ -164,7 +132,7 @@ small{
 <option>Otro</option>
 </select>
 
-<label>Comentario</label>
+<label>Comentario (opcional)</label>
 <textarea id="comentario"></textarea>
 
 <button type="submit">Registrar entrega</button>
@@ -185,7 +153,7 @@ small{
 <th>Entrega</th>
 <th>Devolución</th>
 <th>Comentario</th>
-<th></th>
+<th>Acciones</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -220,29 +188,29 @@ small{
 </div>
 
 <script>
-/* ========= CLAVE (SIN RECARGAS) ========= */
+/* ===== CLAVE ===== */
 (function(){
-  let claveGuardada = localStorage.getItem("clave_app");
-
-  if(!claveGuardada){
-    let nueva = prompt("Crear clave de acceso");
+  const clave = localStorage.getItem("clave_app");
+  if(!clave){
+    const nueva = prompt("Crear clave de acceso");
     if(!nueva){
-      alert("No se creó clave. Acceso cancelado.");
+      alert("Debe crear una clave para usar la aplicación");
+      location.reload();
       return;
     }
     localStorage.setItem("clave_app", nueva);
   }else{
-    let ingreso = prompt("Ingrese la clave");
-    if(ingreso !== claveGuardada){
+    const ingreso = prompt("Ingrese la clave");
+    if(ingreso !== clave){
       alert("Clave incorrecta");
+      location.reload();
       return;
     }
   }
-
   document.getElementById("app").style.display="block";
 })();
 
-/* ========= DATOS ========= */
+/* ===== DATOS ===== */
 let registros = JSON.parse(localStorage.getItem("registros") || "[]");
 const tbody = document.getElementById("tbody");
 
@@ -258,11 +226,11 @@ function ahora(){
   };
 }
 
-/* ========= RENDER ========= */
+/* ===== RENDER ===== */
 function render(){
   tbody.innerHTML="";
   registros.forEach((r,i)=>{
-    let tr=document.createElement("tr");
+    const tr=document.createElement("tr");
     tr.innerHTML=`
 <td>${r.fecha}</td>
 <td>${r.hora}</td>
@@ -270,23 +238,27 @@ function render(){
 <td>${r.cargo}</td>
 <td>${r.equipo}</td>
 <td>${r.entrega}</td>
-<td>${r.devolucion||"Pendiente"}</td>
-<td>${r.comentario||""}</td>
+<td>${r.devolucion || "Pendiente"}</td>
+<td class="comment-block">${r.comentario || ""}</td>
 <td class="actions">
-${!r.devolucion?`<button onclick="devolver(${i})">Devolver</button>`:""}
+${!r.devolucion ? `<button onclick="devolver(${i})">Devolver</button>` : ""}
+<button class="secondary" onclick="agregarComentario(${i})">Comentario</button>
 </td>`;
     tbody.appendChild(tr);
   });
 }
-
 render();
 
-/* ========= ENTREGA ========= */
+/* ===== ENTREGA ===== */
 formRegistro.onsubmit=e=>{
   e.preventDefault();
   if(!confirm("¿Confirma entrega?")) return;
 
   const t=ahora();
+  const texto = comentario.value.trim()
+    ? `[${t.fecha} ${t.hora}] ${comentario.value.trim()}`
+    : "";
+
   registros.push({
     fecha:t.fecha,
     hora:t.hora,
@@ -295,7 +267,7 @@ formRegistro.onsubmit=e=>{
     equipo:equipo.value,
     entrega:`${t.fecha} ${t.hora}`,
     devolucion:"",
-    comentario:comentario.value
+    comentario:texto
   });
 
   guardar();
@@ -303,7 +275,7 @@ formRegistro.onsubmit=e=>{
   e.target.reset();
 };
 
-/* ========= DEVOLUCIÓN ========= */
+/* ===== DEVOLUCIÓN ===== */
 function devolver(i){
   if(!confirm("¿Confirma devolución?")) return;
   const t=ahora();
@@ -312,37 +284,78 @@ function devolver(i){
   render();
 }
 
-/* ========= PDF ========= */
-function generarPDF(){
-  const d=desde.value;
-  const h=hasta.value;
-  const datos = registros.filter(r=>r.fecha>=d && r.fecha<=h);
-
-  if(!datos.length){
-    alert("No hay registros para ese rango");
-    return;
-  }
-
-  const {jsPDF}=window.jspdf;
-  const pdf=new jsPDF("l","mm","a4");
-  let y=10;
-
-  pdf.text(`Historial de Materiales (${d} a ${h})`,10,y);
-  y+=8;
-
-  datos.forEach(r=>{
-    pdf.text(
-      `${r.fecha} ${r.hora} | ${r.nombre} | ${r.cargo} | ${r.equipo} | Entrega:${r.entrega} | Devolución:${r.devolucion||"Pendiente"}`,
-      10,y
-    );
-    y+=6;
-    if(y>190){ pdf.addPage(); y=10; }
-  });
-
-  pdf.save("historial_materiales.pdf");
+/* ===== COMENTARIO ===== */
+function agregarComentario(i){
+  const texto = prompt("Ingrese el comentario");
+  if(!texto) return;
+  const t=ahora();
+  const linea = `[${t.fecha} ${t.hora}] ${texto}`;
+  registros[i].comentario = registros[i].comentario
+    ? registros[i].comentario + "\n" + linea
+    : linea;
+  guardar();
+  render();
 }
 
-/* ========= RESPALDO ========= */
+/* ===== PDF (NO MONTA DATOS) ===== */
+function generarPDF(desdeAuto=null, hastaAuto=null, auto=false){
+  const d = desdeAuto || desde.value;
+  const h = hastaAuto || hasta.value;
+  if(!d || !h){ alert("Seleccione un rango válido"); return; }
+
+  const datos = registros.filter(r => r.fecha >= d && r.fecha <= h);
+  if(!datos.length){ if(!auto) alert("No hay registros"); return; }
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF("l","mm","a4");
+
+  let y=10;
+  pdf.setFontSize(14);
+  pdf.text(`Historial de Materiales (${d} a ${h})`,10,y);
+  y+=10;
+
+  pdf.setFontSize(10);
+
+  datos.forEach(r=>{
+    const texto =
+`${r.fecha} ${r.hora} | ${r.nombre} | ${r.cargo} | ${r.equipo}
+Entrega: ${r.entrega}
+Devolución: ${r.devolucion || "Pendiente"}
+${r.comentario || ""}`;
+
+    const lineas = pdf.splitTextToSize(texto,270);
+    if(y + lineas.length*6 > 190){ pdf.addPage(); y=10; }
+    pdf.text(lineas,10,y);
+    y += lineas.length*6 + 4;
+  });
+
+  pdf.save(auto ? `historial_${d}_auto.pdf` : `historial_${d}_a_${h}.pdf`);
+}
+
+/* ===== PDF AUTOMÁTICO DEL DÍA ===== */
+function pdfAutomaticoHoy(){
+  const hoy = new Date().toISOString().slice(0,10);
+  generarPDF(hoy,hoy,true);
+}
+
+/* ===== EMERGENTE AUTOMÁTICO POR HORARIO ===== */
+const HORAS_PDF = [5,14,17,23];
+
+setInterval(()=>{
+  const ahora = new Date();
+  const hora = ahora.getHours();
+  const fecha = ahora.toISOString().slice(0,10);
+  const key = `pdf_${fecha}_${hora}`;
+
+  if(HORAS_PDF.includes(hora) && !localStorage.getItem(key)){
+    if(confirm("¿Desea guardar historial de hoy hasta este momento?")){
+      pdfAutomaticoHoy();
+    }
+    localStorage.setItem(key,"ok");
+  }
+},60000);
+
+/* ===== RESPALDO ===== */
 function exportar(){
   const blob=new Blob([JSON.stringify(registros,null,2)],{type:"application/json"});
   const a=document.createElement("a");
@@ -354,8 +367,7 @@ function exportar(){
 function importar(e){
   const f=e.target.files[0];
   if(!f) return;
-  if(!confirm("Esto reemplazará todos los datos actuales")) return;
-
+  if(!confirm("Esto reemplazará todos los datos")) return;
   const r=new FileReader();
   r.onload=()=>{
     registros=JSON.parse(r.result);
