@@ -61,6 +61,9 @@ button{
 }
 button:hover{ background:var(--c3) }
 button.secondary{ background:#aaa }
+button.danger{ background:#c0392b }
+button.danger:hover{ background:#a93226 }
+
 table{
   width:100%;
   border-collapse:collapse;
@@ -92,6 +95,11 @@ small{ color:var(--muted) }
   white-space:pre-line;
   font-size:13px;
 }
+.footer-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
 </style>
 </head>
 
@@ -101,7 +109,7 @@ small{ color:var(--muted) }
 <div class="container">
 
 <div class="card">
-<h1>Registro de Materiales</h1>
+<h1>Entrega y Devolución de Equipos y Materiales</h1>
 
 <form id="formRegistro">
 <label>Nombre</label>
@@ -114,8 +122,9 @@ small{ color:var(--muted) }
 <option>Practicante Interno</option>
 <option>Médico</option>
 <option>ASG</option>
-<option>Vigilancia</option>
+<option>Vigliancia</option>
 <option>Ascensorista</option>
+<option>Otro</option>
 </select>
 
 <label>Equipo</label>
@@ -179,10 +188,13 @@ small{ color:var(--muted) }
 </div>
 
 <div class="card">
-<h2>Respaldo</h2>
+<h2>Respaldo y mantenimiento</h2>
+<div class="footer-actions">
 <button onclick="exportar()">Descargar JSON</button>
 <input type="file" onchange="importar(event)">
-<small>Importar reemplaza todos los datos</small>
+<button class="danger" onclick="limpiarHistorial()">Limpiar historial</button>
+</div>
+<small>Importar reemplaza todos los datos. Limpiar historial es irreversible.</small>
 </div>
 
 </div>
@@ -227,10 +239,11 @@ function ahora(){
   };
 }
 
-/* ===== RENDER ===== */
+/* ===== RENDER (INVERSO EN PANTALLA) ===== */
 function render(){
   tbody.innerHTML="";
-  registros.forEach((r,i)=>{
+  for(let i = registros.length - 1; i >= 0; i--){
+    const r = registros[i];
     const tr=document.createElement("tr");
     tr.innerHTML=`
 <td>${r.fecha}</td>
@@ -246,7 +259,7 @@ ${!r.devolucion ? `<button onclick="devolver(${i})">Devolver</button>` : ""}
 <button class="secondary" onclick="agregarComentario(${i})">Comentario</button>
 </td>`;
     tbody.appendChild(tr);
-  });
+  }
 }
 render();
 
@@ -298,23 +311,26 @@ function agregarComentario(i){
   render();
 }
 
-/* ===== PDF (NO MONTA DATOS) ===== */
-function generarPDF(desdeAuto=null, hastaAuto=null, auto=false){
-  const d = desdeAuto || desde.value;
-  const h = hastaAuto || hasta.value;
-  if(!d || !h){ alert("Seleccione un rango válido"); return; }
-
+/* ===== PDF ===== */
+function generarPDF(){
+  const d = desde.value;
+  const h = hasta.value;
+  if(!d || !h){
+    alert("Seleccione un rango válido");
+    return;
+  }
   const datos = registros.filter(r => r.fecha >= d && r.fecha <= h);
-  if(!datos.length){ if(!auto) alert("No hay registros"); return; }
+  if(!datos.length){
+    alert("No hay registros para ese rango");
+    return;
+  }
 
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF("l","mm","a4");
-
-  let y=10;
+  let y = 10;
   pdf.setFontSize(14);
   pdf.text(`Historial de Materiales (${d} a ${h})`,10,y);
   y+=10;
-
   pdf.setFontSize(10);
 
   datos.forEach(r=>{
@@ -325,36 +341,34 @@ Devolución: ${r.devolucion || "Pendiente"}
 ${r.comentario || ""}`;
 
     const lineas = pdf.splitTextToSize(texto,270);
-    if(y + lineas.length*6 > 190){ pdf.addPage(); y=10; }
+    if(y + lineas.length * 6 > 190){
+      pdf.addPage();
+      y = 10;
+    }
     pdf.text(lineas,10,y);
-    y += lineas.length*6 + 4;
+    y += lineas.length * 6 + 4;
   });
 
-  pdf.save(auto ? `historial_${d}_auto.pdf` : `historial_${d}_a_${h}.pdf`);
+  pdf.save(`historial_${d}_a_${h}.pdf`);
 }
 
-/* ===== PDF AUTOMÁTICO DEL DÍA ===== */
-function pdfAutomaticoHoy(){
-  const hoy = new Date().toISOString().slice(0,10);
-  generarPDF(hoy,hoy,true);
-}
-
-/* ===== EMERGENTE AUTOMÁTICO POR HORARIO ===== */
-const HORAS_PDF = [5,11,17,23];
-
-setInterval(()=>{
-  const ahora = new Date();
-  const hora = ahora.getHours();
-  const fecha = ahora.toISOString().slice(0,10);
-  const key = `pdf_${fecha}_${hora}`;
-
-  if(HORAS_PDF.includes(hora) && !localStorage.getItem(key)){
-    if(confirm("¿Desea guardar historial de hoy hasta este momento?")){
-      pdfAutomaticoHoy();
-    }
-    localStorage.setItem(key,"ok");
+/* ===== LIMPIAR HISTORIAL ===== */
+function limpiarHistorial(){
+  if(!registros.length){
+    alert("El historial ya está vacío");
+    return;
   }
-},60000);
+  const ok = confirm(
+    "¿Está seguro de borrar el historial?\n\n" +
+    "Asegúrese de haber guardado el PDF y/o el respaldo JSON.\n" +
+    "Esta acción no se puede deshacer."
+  );
+  if(!ok) return;
+
+  registros = [];
+  guardar();
+  render();
+}
 
 /* ===== RESPALDO ===== */
 function exportar(){
@@ -368,7 +382,7 @@ function exportar(){
 function importar(e){
   const f=e.target.files[0];
   if(!f) return;
-  if(!confirm("Esto reemplazará todos los datos")) return;
+  if(!confirm("Esto reemplazará todos los datos actuales")) return;
   const r=new FileReader();
   r.onload=()=>{
     registros=JSON.parse(r.result);
@@ -381,5 +395,3 @@ function importar(e){
 
 </body>
 </html>
-
-
