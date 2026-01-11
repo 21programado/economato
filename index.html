@@ -233,10 +233,16 @@ function guardar(){
 
 function ahora(){
   const d = new Date();
-  return {
-    fecha: d.toISOString().slice(0,10),
-    hora: d.toTimeString().slice(0,5)
-  };
+  const fecha =
+    d.getFullYear() + "-" +
+    String(d.getMonth()+1).padStart(2,"0") + "-" +
+    String(d.getDate()).padStart(2,"0");
+
+  const hora =
+    String(d.getHours()).padStart(2,"0") + ":" +
+    String(d.getMinutes()).padStart(2,"0");
+
+  return { fecha, hora };
 }
 
 /* ===== RENDER (INVERSO EN PANTALLA) ===== */
@@ -395,3 +401,4 @@ function importar(e){
 
 </body>
 </html>
+
